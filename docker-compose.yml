@@ -1,0 +1,27 @@
+version: 'latest'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  js-app:
+    build: .
+    container_name: js-app
+    depends_on:
+      - mongodb
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    command: npm run start
+
+volumes:
+  mongo-data:
+    driver: local
