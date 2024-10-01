@@ -1,81 +1,49 @@
 "use server";
 
 import { MongoClient, GridFSBucket } from "mongodb";
-import * as fs from "fs";
+import * as fs from "fs/promises";
+import dotenv from 'dotenv';
+import mongoose from "mongoose";
+import { ImageSchema } from "@/schemas/imageSchema";
 
+dotenv.config();
 const url = process.env.MONGO_URL!;
-const dbName = process.env.DB_NAME!;
-const healthyBucketName = process.env.HEALTHY_BUCKET_NAME!;
-const rustBucketName = process.env.RUST_BUCKET_NAME!;
 
 async function UploadImage(file: File) {
-  const client = new MongoClient(url);
 
   try {
-    await client.connect();
-    const db = client.db(dbName);
-    const bucket = new GridFSBucket(db, {
-      bucketName: process.env.BUCKET_NAME!,
-    });
-
-    const uploadStream = bucket.openUploadStream(file.name);
-    fs.createReadStream(file.webkitRelativePath)
-      .pipe(uploadStream)
-      .on("error", (error: any) => {
-        console.log("HOUVE UM ERRO AO ENVIAR A IMAGEM: ", error.message);
-      })
-      .on("finish", () => {
-        console.log("Imagem salva com sucesso!");
-      });
-
-    return true;
+   
   } catch (error: any) {
     console.log("HOUVE UM ERRO AO SALVAR A IMAGEM: ", error.message);
     return false;
   } finally {
-    await client.close();
   }
 }
 
 async function GetImages() {
-  const client = new MongoClient(url);
-
   try {
-    await client.connect();
-    const db = client.db(dbName);
+    await mongoose.connect(url);
 
-    const healthyBucket = new GridFSBucket(db, { bucketName: healthyBucketName });
-    const rustBucket = new GridFSBucket(db, { bucketName: rustBucketName });
+    const healthyImageModel = mongoose.models[process.env.HEALTHY_MODEL_NAME!] || mongoose.model(process.env.HEALTHY_MODEL_NAME!, ImageSchema);
+    const rustImageModel = mongoose.models[process.env.RUST_MODEL_NAME!] || mongoose.model(process.env.RUST_MODEL_NAME!, ImageSchema);
 
-    const healthyImages = await healthyBucket.find().toArray();
-    const rustImages = await rustBucket.find().toArray();
+    const healthyImages = await healthyImageModel.find();
+    const rustImages = await rustImageModel.find();
 
-    if (healthyImages.length === 0) console.log("[NAO FOI ENCONTRADA NENHUMA IMAGEM HEALTHY]");
-    else {
-      console.log('[HEALTHY IMAGES ARRAY]');
-      console.log('-------------------------------------------------------------');
-      healthyImages.forEach(image => {
-        console.log(`Name: ${image.filename} - id: ${image._id} - Size: ${image.length} - UpDate: ${image.uploadDate}`);
-      })
-      console.log('-------------------------------------------------------------');
-    }
+    // Aqui eu tenho o caminho de cada uma das imagens
+    // Será que se eu mandar os caminhos das imagens, ele já encontra elas?...
 
-    if (rustImages.length === 0) console.log('[NÃO FOI ENCONTRADA NENHUMA IMAGEM RUST]');
-    else {
-      console.log('[RUST IMAGES ARRAY]');
-      console.log('-------------------------------------------------------------');
-      rustImages.forEach(image => {
-        console.log(`Name: ${image.filename} - id: ${image._id} - Size: ${image.length} - UpDate: ${image.uploadDate}`);
-      })
-      console.log('-------------------------------------------------------------');
-    }
+    console.log('[HEALTHY IMAGES]: ', healthyImages);
+    console.log('[RUST IMAGES]: ', rustImages);
 
-    return { healthyImages, rustImages };
+    
+
+    return JSON.stringify({ healthyImages, rustImages });
   } catch (error: any) {
-    console.log("[HOUVE UM ERRO AO BUSCAR AS IMAGENS]: ", error.message);
+    console.log('[HOUVE UM ERRO NA BUSCA DE IMAGENS]: ', error.message);
     return null;
   } finally {
-    await client.close();
+    await mongoose.disconnect();
   }
 }
 

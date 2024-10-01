@@ -10,20 +10,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
   const [inferenceImage, setInferenceImage] = useState<File>();
+  const router = useRouter();
 
   const inference = () => {
     // Aqui eu crio uma função no backend para realizar a inferência
     console.log("[INFERÊNCIA REALIZADA!!!!]");
   };
-
-
-  const onBuscarDados= async () => {
-    await GetImages();
-  }
 
   return (
     <div className="flex flex-col justify-center mx-40">
@@ -73,9 +70,11 @@ export default function Home() {
                 <Button variant={"ghost"} className="rounded-xl w-full text-xl">
                   Inserir dados
                 </Button>
-                <Button onClick={onBuscarDados} variant={"ghost"} className="rounded-xl w-full text-xl">
-                  Buscar dados
-                </Button>
+                <a className='rounded-xl w-full text-xl' href='/images' target="_blank">
+                  <Button variant={"ghost"} className="rounded-xl w-full text-xl">
+                    Buscar dados
+                  </Button>
+                </a>
               </div>
             </AccordionContent>
           </AccordionItem>

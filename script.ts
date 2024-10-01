@@ -1,64 +1,91 @@
 import dotenv from "dotenv";
-import * as fs from "fs";
+import * as fs from "fs/promises";
 import path from 'path';
-import mongoose, { Connection } from "mongoose";
-import { HealthyImageModel, RustImageModel } from "./schemas/imageSchema";
+import mongoose from "mongoose";
+import { ImageSchema } from "./schemas/imageSchema";
 
 
-(async () => {
-
+const insereDatasetInicial = async () => {
+  dotenv.config();
   try {
+    const url = process.env.MONGO_URL!;
 
     const healthyImageDir = './dataset/healthy';
     const rustImageDir = './dataset/rust';
 
+    await mongoose.connect(url);
+
     console.log('[--------------------------------------- HEALTHY ---------------------------------------------------]');
 
-    fs.readdirSync(healthyImageDir).forEach(async file => { // Subindo imagens para o bucket "Healthy"
+    const healthyFiles = await fs.readdir(healthyImageDir);
+    const healthyPromises = healthyFiles.map(async file => {
       const filePath = path.join(__dirname, healthyImageDir, file);
-      
-      const instance = await HealthyImageModel.findOne({ path: filePath });
-      
-      if (!instance) {
+      const healthyImageModel = mongoose.model(process.env.HEALTHY_MODEL_NAME!, ImageSchema);
 
-        const healthyImage = new HealthyImageModel({
-          name: file,
-          path: filePath
-        });
+      const healthyImage = new healthyImageModel({
+        name: file,
+        path: filePath
+      });
 
-        console.log('[SAVING HEALTHY IMAGE....]');
+      if (healthyImage.isNew) {
+        console.log('[SAVING HEALTHY IMAGE.....]');
         await healthyImage.save();
-      
-        await healthyImage.db.close();
       }
+    })
 
-    });
+
     console.log('[--------------------------------------- HEALTHY ---------------------------------------------------]');
 
     console.log('[--------------------------------------- RUST ---------------------------------------------------]');
-    fs.readdirSync(rustImageDir).forEach(async file => { // Mudar a forma de fazer. Criar vários objetos ImageData e salvar de uma vez
+    
+    const rustFiles = await fs.readdir(rustImageDir);
+    const rustPromises = rustFiles.map(async file => {
       const filePath = path.join(__dirname, rustImageDir, file);
+      const rustImageModel = mongoose.model(process.env.RUST_MODEL_NAME!, ImageSchema);
 
-      const instance = await RustImageModel.findOne({ path: filePath });
+      const rustImage = new rustImageModel({
+        name: file,
+        path: filePath
+      });
 
-
-      if (!instance) {
-        const rustImage = new RustImageModel({
-          name: file,
-          path: filePath
-        });
+      if (rustImage.isNew) {
         console.log('[SAVING RUST IMAGE.....]');
         await rustImage.save();
-
-        console.log('[Closing....]');
-        await rustImage.db.close();
       }
-
     });
+
     console.log('[--------------------------------------- RUST ---------------------------------------------------]');
 
+    await Promise.all([...healthyPromises, ...rustPromises]);
+
     console.log('[IMAGENS SALVAS COM SUCESSO]!');
+    
   } catch (error: any) {
     console.log("HOUVE UM ERRO NA EXECUÇÃO DO SCRIPT: ", error.message);
+  } finally {
+    await mongoose.disconnect();
   }
-})();
+}
+
+const buscaImagensTeste = async () => {
+    // Buscar imagens
+    dotenv.config();
+    try {
+      const url = process.env.MONGO_URL!;
+      await mongoose.connect(url);
+  
+      const healthyImageModel = mongoose.model(process.env.HEALTHY_MODEL_NAME!, ImageSchema);
+      const rustImageModel = mongoose.model(process.env.RUST_MODEL_NAME!, ImageSchema);
+  
+      const healthyImages = await healthyImageModel.find();
+      const rustImages = await rustImageModel.find();
+  
+      console.log('[HEALTHY IMAGES]: ', healthyImages);
+      console.log('[RUST IMAGES]: ', rustImages);
+  
+    } catch(error: any) {
+      console.log('[HOUVE UM ERRO NA EXECUÇÃO DA BUSCA]: ', error.message);
+    } finally {
+      await mongoose.disconnect();
+    }  
+}
