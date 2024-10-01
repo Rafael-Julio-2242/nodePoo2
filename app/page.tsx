@@ -1,6 +1,6 @@
 "use client";
-
-import { GetImages } from "@/actions/data";
+import '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs';
 import {
   Accordion,
   AccordionContent,
@@ -10,16 +10,49 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
+import React from "react";
 import { useState } from "react";
+import { loadImage } from '@/utils/preprocessingImage';
+
 
 export default function Home() {
   const [inferenceImage, setInferenceImage] = useState<File>();
-  const router = useRouter();
 
-  const inference = () => {
+  const [inferenceLoading, setInferenceLoading] = useState(false);
+
+  const inference = async () => {
     // Aqui eu crio uma função no backend para realizar a inferência
-    console.log("[INFERÊNCIA REALIZADA!!!!]");
+    if (inferenceImage === undefined) return;
+
+    try {
+      setInferenceLoading(true);
+
+      const tensor = tf.browser
+        .fromPixels(await loadImage(inferenceImage))
+        .resizeNearestNeighbor([224, 224]) // MobileNet input size
+        .toFloat()
+        .expandDims();
+      return tensor.div(127.5).sub(1); // Normalize to [-1, 1] range
+
+
+      // Depois eu preciso carregar o modelo e dai então
+      // iniciar a inferência
+      // Depois mostrar o resultado
+      
+
+      console.log("tudo ok!");
+    } catch (error: any) {
+      console.log("[Houve um erro ao realizar a inferência]: ", error.message);
+      return;
+    } finally {
+      setInferenceLoading(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setInferenceImage(event.target.files[0]);
+    }
   };
 
   return (
@@ -31,31 +64,39 @@ export default function Home() {
               Realizar Inferência
             </AccordionTrigger>
             <AccordionContent className="bg-violet-300 py-20 rounded-xl border-0">
-              <div className="mx-40 flex flex-col gap-8">
-                <Label
-                  htmlFor="inferenceInput"
-                  className="text-xl text-black text-center rounded-xl"
-                >
-                  Selecione uma Imagem para Realizar a Inferência
-                </Label>
-                <Input
-                  id="inferenceInput"
-                  type="file"
-                  accept="image/*"
-                  placeholder="Selecione uma imagem"
-                  multiple={false}
-                  className="rounded-xl hover:cursor-pointer"
-                  onChange={(e) => setInferenceImage(e.target.files?.[0])}
-                />
-                <Button
-                  disabled={inferenceImage === undefined}
-                  onClick={inferenceImage !== undefined ? inference : undefined}
-                  variant={"default"}
-                  className="rounded-xl"
-                >
-                  Realizar Inferência
-                </Button>
-              </div>
+              {inferenceLoading ? (
+                <>Carregando...</>
+              ) : (
+                <>
+                  <div className="mx-40 flex flex-col gap-8">
+                    <Label
+                      htmlFor="inferenceInput"
+                      className="text-xl text-black text-center rounded-xl"
+                    >
+                      Selecione uma Imagem para Realizar a Inferência
+                    </Label>
+                    <Input
+                      id="inferenceInput"
+                      type="file"
+                      accept="image/*"
+                      placeholder="Selecione uma imagem"
+                      multiple={false}
+                      className="rounded-xl hover:cursor-pointer"
+                      onChange={handleFileChange}
+                    />
+                    <Button
+                      disabled={inferenceImage === undefined}
+                      onClick={
+                        inferenceImage !== undefined ? inference : undefined
+                      }
+                      variant={"default"}
+                      className="rounded-xl"
+                    >
+                      Realizar Inferência
+                    </Button>
+                  </div>
+                </>
+              )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -70,8 +111,15 @@ export default function Home() {
                 <Button variant={"ghost"} className="rounded-xl w-full text-xl">
                   Inserir dados
                 </Button>
-                <a className='rounded-xl w-full text-xl' href='/images' target="_blank">
-                  <Button variant={"ghost"} className="rounded-xl w-full text-xl">
+                <a
+                  className="rounded-xl w-full text-xl"
+                  href="/images"
+                  target="_blank"
+                >
+                  <Button
+                    variant={"ghost"}
+                    className="rounded-xl w-full text-xl"
+                  >
                     Buscar dados
                   </Button>
                 </a>

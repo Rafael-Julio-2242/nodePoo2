@@ -3,7 +3,12 @@ interface ImageData {
   path: string;
 }
 
+interface ImageTransfer {
+  name: string;
+  imageBase64: string;
+}
 
 export type {
-  ImageData
+  ImageData,
+  ImageTransfer
 }
