@@ -1,5 +1,6 @@
 "use client";
 
+import { GetImages } from "@/actions/data";
 import {
   Accordion,
   AccordionContent,
@@ -18,6 +19,11 @@ export default function Home() {
     // Aqui eu crio uma função no backend para realizar a inferência
     console.log("[INFERÊNCIA REALIZADA!!!!]");
   };
+
+
+  const onBuscarDados= async () => {
+    await GetImages();
+  }
 
   return (
     <div className="flex flex-col justify-center mx-40">
@@ -67,7 +73,7 @@ export default function Home() {
                 <Button variant={"ghost"} className="rounded-xl w-full text-xl">
                   Inserir dados
                 </Button>
-                <Button variant={"ghost"} className="rounded-xl w-full text-xl">
+                <Button onClick={onBuscarDados} variant={"ghost"} className="rounded-xl w-full text-xl">
                   Buscar dados
                 </Button>
               </div>

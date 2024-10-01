@@ -8,8 +8,8 @@ RUN npm run build
 
 # Stage 2: Run
 FROM node:22
-WORKDIR /app
 COPY --from=build /app ./
+WORKDIR /app
 RUN npm ci --omit=dev
 EXPOSE 3000
 CMD ["npm", "run", "start"]

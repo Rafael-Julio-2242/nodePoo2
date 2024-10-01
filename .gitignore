@@ -9,7 +9,7 @@
 package-lock.json
 .env
 mongo-data/
-
+dataset/
 # testing
 /coverage
 

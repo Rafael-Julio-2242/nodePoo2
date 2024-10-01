@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Node POO2 Project
 
-## Getting Started
+Este é um projeto de utilização de um modelo de IA para identificar
+a deteriorização de plantas
 
-First, run the development server:
+Esse projeto utiliza nextJS e mongo para podermos realizar as devidas
+ações correspondentes.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Para testes, se utiliza um container mongo para realizar as ações
+determinadas na base de dados
+
+### Comando Docker
+```Bash
+  sudo docker run --name imagesDB -d --rm -p 27017:27017 -v ./mongo-data:/data/db mongo
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Comando para iniciar projeto
+### Em Desenvolvimento
+```Bash
+  npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Em Produção
+```Bash
+  npm run build # Para construir a aplicação para produção
+  npm run start
+```
