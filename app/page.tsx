@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { loadImage } from '@/utils/preprocessingImage';
 
@@ -20,6 +20,10 @@ export default function Home() {
 
   const [inferenceLoading, setInferenceLoading] = useState(false);
 
+  const [modelLoading, setModelLoading] = useState(false);
+
+  const [model, setModel] = useState<tf.LayersModel>();
+
   const inference = async () => {
     // Aqui eu crio uma função no backend para realizar a inferência
     if (inferenceImage === undefined) return;
@@ -27,12 +31,8 @@ export default function Home() {
     try {
       setInferenceLoading(true);
 
-      const tensor = tf.browser
-        .fromPixels(await loadImage(inferenceImage))
-        .resizeNearestNeighbor([224, 224]) // MobileNet input size
-        .toFloat()
-        .expandDims();
-      return tensor.div(127.5).sub(1); // Normalize to [-1, 1] range
+      const model = await tf.loadLayersModel('');
+      
 
 
       // Depois eu preciso carregar o modelo e dai então
@@ -54,6 +54,26 @@ export default function Home() {
       setInferenceImage(event.target.files[0]);
     }
   };
+
+  useEffect(() => {
+    async function loadModel() {
+      try {
+        setModelLoading(true);
+
+        
+
+        const model = await tf.loadLayersModel('/modeljson/model.json');
+        setModel(model);
+        console.log('[model loaded]....');
+      } catch(error: any) {
+        console.log("[Houve um erro ao carregar o modelo]: ", error.message);
+      } finally {
+        setModelLoading(false);
+      }
+    }
+
+    loadModel();
+  },[]);
 
   return (
     <div className="flex flex-col justify-center mx-40">
