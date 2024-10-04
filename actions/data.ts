@@ -5,9 +5,27 @@ import dotenv from 'dotenv';
 import mongoose from "mongoose";
 import { ImageSchema } from "@/schemas/imageSchema";
 import { ImageTransfer } from "@/interfaces/imageData";
+import sharp from "sharp";
 
 dotenv.config();
 const url = process.env.MONGO_URL!;
+
+
+async function preProcessImage(fileImage: string) {
+
+  const buffer = Buffer.from(fileImage, 'base64');
+  const image = await sharp(buffer)
+    .resize(256, 256)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { data, info } = image;
+
+  const stringData = JSON.stringify({data, info});
+
+  return stringData;
+}
+
 
 async function UploadImage(file: File) {
 
@@ -81,4 +99,4 @@ async function GetImages() {
   }
 }
 
-export { UploadImage, GetImages };
+export { UploadImage, GetImages, preProcessImage };

@@ -1,6 +1,6 @@
 "use client";
-import '@tensorflow/tfjs';
-import * as tf from '@tensorflow/tfjs';
+import "@tensorflow/tfjs";
+import * as tf from "@tensorflow/tfjs";
 import {
   Accordion,
   AccordionContent,
@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useEffect } from "react";
 import { useState } from "react";
-import Swal from 'sweetalert2';
-import { preProcessImage } from '@/utils/preprocessingImage';
+import Swal from "sweetalert2";
+import { preProcessImage } from "@/actions/data";
 
-const CLASSNAMES = ['healthy', 'rust'];
+const CLASSNAMES = ["healthy", "rust"];
 
 export default function Home() {
   const [inferenceImage, setInferenceImage] = useState<File>();
@@ -31,11 +31,10 @@ export default function Home() {
     if (inferenceImage === undefined) return;
 
     if (model === undefined) {
-      console.log('[MODELO NÃO CARREGADO]!');
       Swal.fire({
         icon: "error",
         title: "Modelo não carregado!",
-        text: "O modelo não foi carregado! Por favor reinicie a página"
+        text: "O modelo não foi carregado! Por favor reinicie a página",
       });
       return;
     }
@@ -43,9 +42,23 @@ export default function Home() {
     try {
       setInferenceLoading(true);
 
-      const image = await preProcessImage(inferenceImage);
+      const imageArrayBuffer = await inferenceImage.arrayBuffer();
+      const imageBase64 = Buffer.from(imageArrayBuffer).toString("base64");
 
-      const prediction = model.predict(image);
+      const image = JSON.parse(
+        await preProcessImage(
+          JSON.stringify(imageBase64)
+        )
+      );      
+
+      const image4D = tf.tensor4d(image.data.data, [
+        1,
+        image.info.height,
+        image.info.width,
+        image.info.channels,
+      ]);
+
+      const prediction = model.predict(image4D);
 
       const predictedClassIndex = (prediction as any).argMax(-1).arraySync()[0];
 
@@ -54,17 +67,18 @@ export default function Home() {
       Swal.fire({
         icon: "success",
         title: "Inferência concluída!",
-        text: `A imagem foi classificada como ${inferenceResult === 'healthy' ? 'saudável' : 'doente'}`
+        text: `A imagem foi classificada como ${
+          inferenceResult === "healthy" ? "saudável" : "doente"
+        }`,
       });
       // Exibir resultado da inferência na modal
-      console.log("tudo ok!");
     } catch (error: any) {
       console.log("[Houve um erro ao realizar a inferência]: ", error.message);
       Swal.fire({
         icon: "error",
         title: "Houve um erro ao realizar a inferência!",
-        text: error.message
-      })
+        text: error.message,
+      });
       return;
     } finally {
       setInferenceLoading(false);
@@ -82,24 +96,22 @@ export default function Home() {
       try {
         setModelLoading(true);
 
-        
-
-        const model = await tf.loadLayersModel('/modeljson/model.json');
+        const model = await tf.loadLayersModel("/modeljson/model.json");
         setModel(model);
-        console.log('[model loaded]....');
-      } catch(error: any) {
+      } catch (error: any) {
         console.log("[Houve um erro ao carregar o modelo]: ", error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Houve um erro ao carregar o modelo!",
+          text: error.message,
+        });
       } finally {
         setModelLoading(false);
       }
     }
 
     loadModel();
-  },[]);
-
-useEffect(() => {
-  console.log('[INFERENCE IMAGE]: ', inferenceImage);
-},[inferenceImage])
+  }, []);
 
   return (
     <div className="flex flex-col justify-center mx-40">
@@ -110,7 +122,7 @@ useEffect(() => {
               Realizar Inferência
             </AccordionTrigger>
             <AccordionContent className="bg-violet-300 py-20 rounded-xl border-0">
-              {inferenceLoading ? (
+              {inferenceLoading || modelLoading ? (
                 <>Carregando...</>
               ) : (
                 <>
