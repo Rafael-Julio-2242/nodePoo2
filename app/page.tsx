@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useEffect } from "react";
 import { useState } from "react";
-import { loadImage } from '@/utils/preprocessingImage';
+import Swal from 'sweetalert2';
+import { preProcessImage } from '@/utils/preprocessingImage';
 
+const CLASSNAMES = ['healthy', 'rust'];
 
 export default function Home() {
   const [inferenceImage, setInferenceImage] = useState<File>();
@@ -28,21 +30,41 @@ export default function Home() {
     // Aqui eu crio uma função no backend para realizar a inferência
     if (inferenceImage === undefined) return;
 
+    if (model === undefined) {
+      console.log('[MODELO NÃO CARREGADO]!');
+      Swal.fire({
+        icon: "error",
+        title: "Modelo não carregado!",
+        text: "O modelo não foi carregado! Por favor reinicie a página"
+      });
+      return;
+    }
+
     try {
       setInferenceLoading(true);
 
-      const model = await tf.loadLayersModel('');
-      
+      const image = await preProcessImage(inferenceImage);
 
+      const prediction = model.predict(image);
 
-      // Depois eu preciso carregar o modelo e dai então
-      // iniciar a inferência
-      // Depois mostrar o resultado
-      
+      const predictedClassIndex = (prediction as any).argMax(-1).arraySync()[0];
 
+      const inferenceResult = CLASSNAMES[predictedClassIndex]; // Resultado da predição
+
+      Swal.fire({
+        icon: "success",
+        title: "Inferência concluída!",
+        text: `A imagem foi classificada como ${inferenceResult === 'healthy' ? 'saudável' : 'doente'}`
+      });
+      // Exibir resultado da inferência na modal
       console.log("tudo ok!");
     } catch (error: any) {
       console.log("[Houve um erro ao realizar a inferência]: ", error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Houve um erro ao realizar a inferência!",
+        text: error.message
+      })
       return;
     } finally {
       setInferenceLoading(false);
@@ -74,6 +96,10 @@ export default function Home() {
 
     loadModel();
   },[]);
+
+useEffect(() => {
+  console.log('[INFERENCE IMAGE]: ', inferenceImage);
+},[inferenceImage])
 
   return (
     <div className="flex flex-col justify-center mx-40">

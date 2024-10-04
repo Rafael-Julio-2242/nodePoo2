@@ -1,15 +1,22 @@
+import sharp from "sharp";
+import * as tf from '@tensorflow/tfjs';
+
+async function preProcessImage(fileImage: File) {
 
 
+  const buffer = Buffer.from(await fileImage.arrayBuffer());
+  const image = await sharp(buffer)
+    .resize(256, 256)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-export function loadImage(file: File) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target!.result as string;
-      img.onload = () => resolve(img);
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
+  const { data, info } = image;
+
+  const image4D = tf.tensor4d(data, [1, info.height, info.width, info.channels]);
+
+  return image4D;
+}
+
+export {
+  preProcessImage
 }
