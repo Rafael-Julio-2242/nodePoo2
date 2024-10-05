@@ -13,12 +13,19 @@ import { Label } from "@/components/ui/label";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import Swal from "sweetalert2";
-import { preProcessImage } from "@/actions/data";
+import { preProcessImage, UploadImage } from "@/actions/data";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CLASSNAMES = ["healthy", "rust"];
 
 export default function Home() {
   const [inferenceImage, setInferenceImage] = useState<File>();
+
+  const [insertImage, setInsertImage] = useState<File>();
+  const [insertImageType, setInsertImageType] = useState<'healthy' | 'rust' | ''>('');
+
+  const [insertLoading, setInsertLoading] = useState(false);
 
   const [inferenceLoading, setInferenceLoading] = useState(false);
 
@@ -85,11 +92,57 @@ export default function Home() {
     }
   };
 
+  const onInsertImage = async () => { 
+    if (insertImage === undefined) return;
+    if (insertImageType === '') return;
+
+    try {
+      setInsertLoading(true);
+
+      const imageArrayBuffer = await insertImage.arrayBuffer();
+      const imageBase64 = Buffer.from(imageArrayBuffer).toString("base64");
+
+      const result = await UploadImage(imageBase64, insertImageType);
+      
+      if (!result) {
+        Swal.fire({
+          icon: "error",
+          title: "Houve um erro ao inserir a imagem!",
+        });
+        return;
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Imagem inserida com sucesso!",
+      });
+      setInsertImage(undefined);
+      setInsertImageType('');
+    } catch(error: any) { 
+      Swal.fire({
+        icon: "error",
+        title: "Houve um erro ao inserir a imagem!",
+        text: error.message,
+      })
+    } finally {
+      setInsertLoading(false);
+    }
+
+  }
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setInferenceImage(event.target.files[0]);
     }
   };
+
+  const handleInsertFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setInsertImage(event.target.files[0]);
+    }
+  };
+
+  
 
   useEffect(() => {
     async function loadModel() {
@@ -112,6 +165,8 @@ export default function Home() {
 
     loadModel();
   }, []);
+
+
 
   return (
     <div className="flex flex-col justify-center mx-40">
@@ -166,9 +221,45 @@ export default function Home() {
             </AccordionTrigger>
             <AccordionContent className="bg-violet-300 py-20 rounded-xl">
               <div className="mx-40 flex gap-8">
-                <Button variant={"ghost"} className="rounded-xl w-full text-xl">
-                  Inserir dados
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant={"ghost"} className="rounded-xl w-full text-xl">
+                      Inserir dados
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <div className="flex flex-col gap-8">
+                      <Label>Selecione o Tipo da Imagem</Label>
+                      <Select onValueChange={(value) => setInsertImageType((value as any))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="O tipo da Imagem" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="healthy">Saudável</SelectItem>
+                          <SelectItem value="rust">Doente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex flex-col gap-8">
+                      <Label htmlFor='insertImageInput'>Selecione a Imagem</Label>
+                      <Input
+                        id="insertImageInput"
+                        type="file"
+                        accept="image/*"
+                        placeholder="Selecione uma imagem"
+                        multiple={false}
+                        className="rounded-xl hover:cursor-pointer"
+                        onChange={handleInsertFileChange}
+                      />
+                    </div>
+                    <Button
+                      disabled={insertImage === undefined || insertImageType === ''}
+                      onClick={insertImage !== undefined && insertImageType !== '' ? onInsertImage : undefined}
+                    >
+                      Inserir Imagem
+                    </Button>
+                  </DialogContent>
+                </Dialog>
                 <a
                   className="rounded-xl w-full text-xl"
                   href="/images"

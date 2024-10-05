@@ -9,7 +9,7 @@ const insereDatasetInicial = async () => {
   dotenv.config();
   try {
     const url = process.env.MONGO_URL!;
-
+    console.log('');
     const healthyImageDir = './dataset/healthy';
     const rustImageDir = './dataset/rust';
 
@@ -89,3 +89,6 @@ const buscaImagensTeste = async () => {
       await mongoose.disconnect();
     }  
 }
+
+// insereDatasetInicial();
+// buscaImagensTeste();

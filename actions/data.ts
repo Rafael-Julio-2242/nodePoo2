@@ -27,14 +27,68 @@ async function preProcessImage(fileImage: string) {
 }
 
 
-async function UploadImage(file: File) {
-
+async function UploadImage(imageBase64: string, imageType: 'healthy' | 'rust') {
+  console.log('[UPLOAD IMAGE]: ', imageType);
   try {
-   
+    
+    await mongoose.connect(url);
+
+    if (imageType === 'healthy') {
+
+      const healthyImageModel = mongoose.models[process.env.HEALTHY_MODEL_NAME!] || mongoose.model(process.env.HEALTHY_MODEL_NAME!, ImageSchema);
+      // Eu preciso "criar" a imagem no dataset e inserir no banco
+
+      const lastId = await healthyImageModel.find().sort({ _id: -1 }).limit(1).select('_id');
+
+      const url = path.resolve('dataset', 'healthy', `${lastId[0]._id}.png`);
+
+      fs.writeFileSync(path.resolve(url), imageBase64, 'base64');
+
+      // agora preciso inserir a imagem no banco de dados
+
+      const healthyImage = new healthyImageModel({
+        name: `${lastId[0] + 1}`,
+        path: url
+      });
+
+      if (healthyImage.isNew) {
+        console.log('[SAVING HEALTHY IMAGE.....]'); 
+        await healthyImage.save();
+      }
+
+      return true;
+    }
+
+    if (imageType === 'rust') {
+
+      const rustImageModel = mongoose.models[process.env.RUST_MODEL_NAME!] || mongoose.model(process.env.RUST_MODEL_NAME!, ImageSchema);
+
+      const lastId = await rustImageModel.find().sort({ _id: -1 }).limit(1).select('_id');
+
+      const url = path.resolve('dataset', 'rust', `${lastId[0]._id}.png`);
+      console.log('[URL]: ', url);
+
+      fs.writeFileSync(path.resolve(url), imageBase64, 'base64');
+
+      // agora preciso inserir a imagem no banco de dados
+      const rustImage = new rustImageModel({
+        name: `${lastId[0] + 1}`,
+        path: url
+      });
+
+      if (rustImage.isNew) {
+        console.log('[SAVING RUST IMAGE.....]');
+        await rustImage.save();
+      }
+
+      return true;
+    }
+
   } catch (error: any) {
     console.log("HOUVE UM ERRO AO SALVAR A IMAGEM: ", error.message);
     return false;
   } finally {
+  
   }
 }
 
