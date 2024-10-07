@@ -20,13 +20,7 @@ determinadas na base de dados
 ```
 
 ## Comando para iniciar projeto
-### Em Desenvolvimento
 ```Bash
   npm run dev
 ```
 
-### Em Produção
-```Bash
-  npm run build # Para construir a aplicação para produção
-  npm run start
-```

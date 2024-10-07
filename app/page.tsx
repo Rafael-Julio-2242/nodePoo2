@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const CLASSNAMES = ["healthy", "rust"];
 
 export default function Home() {
+
   const [inferenceImage, setInferenceImage] = useState<File>();
 
   const [insertImage, setInsertImage] = useState<File>();
@@ -141,8 +142,6 @@ export default function Home() {
       setInsertImage(event.target.files[0]);
     }
   };
-
-  
 
   useEffect(() => {
     async function loadModel() {
@@ -272,21 +271,6 @@ export default function Home() {
                     Buscar dados
                   </Button>
                 </a>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <Accordion type="single" collapsible>
-          <AccordionItem value="item-1" className="border-0">
-            <AccordionTrigger className="bg-[#7E1BCA] p-4 text-white rounded-xl text-2xl">
-              Modelo
-            </AccordionTrigger>
-            <AccordionContent className="bg-violet-300 py-20 rounded-xl">
-              <div className="mx-40 flex gap-8">
-                <Button variant={"ghost"} className="rounded-xl w-full text-xl">
-                  Treinar Modelo
-                </Button>
               </div>
             </AccordionContent>
           </AccordionItem>
